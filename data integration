@@ -1,1 +1,483 @@
 
+package data;
+
+/*
+ * @author Sara Djebrit
+ */
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.attachment.AttachmentMarshaller;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.jsoup.Jsoup;
+import org.jsoup.select.Elements;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+ import data.Stopwatch;
+
+public class propre {
+	Stopwatch time=new Stopwatch();
+public static void main(String[]args) throws  	    IOException
+{
+// this part is for traiting json data
+ JSONParser parser = new JSONParser();
+ JSONParser obj;
+ String []attr= {\\put here the name of columns in your data};
+ //ArrayList<Map<String, ArrayList<String>>> json = new ArrayList<Map<String,ArrayList<String>>>();
+ HashMap<String, ArrayList<String>> hash_json = new HashMap<String, ArrayList<String>>();
+ try
+    {
+	  FileReader reader = new FileReader("/home/sara/Desktop/meth/da_json.json");\\path of json data
+
+
+      JSONParser jsonParser = new JSONParser();
+
+      String file ="da_json.json";
+      BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+      
+     // put all the data of json file into new array list
+      Gson gson = new Gson();
+      JsonObject jsonObject = gson.fromJson(new FileReader(file), JsonObject.class);
+      
+     JsonArray ar=jsonObject.getAsJsonArray("row");
+     
+     
+     for(int a=0;a<attr.length;a++) {
+    	 ArrayList<String>ele=new ArrayList<String>();
+    	  for(int i=0; i<ar.size(); i++){
+              JsonElement ject = ar.get(i);
+              JsonObject ob=(JsonObject) ject;
+              String e=ob.get(attr[a]).toString();
+              ele.add(e);
+           }
+    	  hash_json .put(attr[a], ele);
+     }
+  
+	 
+	 
+    
+ 
+ // this part is for traiting xml data
+ 
+ HashMap <String, ArrayList<String>> hash_xml = new <String, ArrayList<String>> HashMap() ;
+  String[]at= {\\ the names of elements in your xml file };
+ 
+     String fi="new.xml"; \\the name of xml file
+		File fXmlFile = new File(fi);
+		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+		Document doc = dBuilder.parse(fXmlFile);
+				
+		 
+		doc.getDocumentElement().normalize();
+
+		 
+				
+		NodeList nList = doc.getElementsByTagName("row");
+				
+		
+ for(int t=0;t<at.length;t++) {
+	    ArrayList<String>x=new ArrayList<String>();
+		for (int temp = 0; temp < nList.getLength(); temp++) {
+
+			Node nNode = nList.item(temp);
+			Element  eElement = (Element) (nNode);
+			String name= ( eElement).getElementsByTagName(at[t]).item(0).getTextContent();
+			x.add(name);	 
+		}hash_xml.put(at[t], x);	   
+		}
+ 
+      
+     
+     
+ 
+ 
+ //this part is fo trating html data
+ 
+ 
+	String htm="belongs.html";
+	 
+	 
+	
+    org.jsoup.nodes.Document docume=Jsoup.parse(new File(htm),"UTF-8");
+    
+    Elements tableElements = docume.select("table");
+
+	 Elements tableHeaderEles = tableElements.select("thead tr th");
+		 
+	 HashMap <String, ArrayList<String>>  hash_html= new <String, ArrayList<String>> HashMap() ; 
+	 
+  Elements rows = docume.select("table > tbody > tr");
+    int[] offsets = new int[rows.size()];
+  
+    for (int i = 0; i < rows.get(0).children().size(); i++)  
+    {
+   		String table=tableHeaderEles.get(i).text();
+       
+   	  
+   	   ArrayList<String> c=new ArrayList<String>();
+   	for (int j = 0; j < rows.size();j++)  
+        {
+       	 
+            org.jsoup.nodes.Element cell = rows.get(j).child(i + offsets[j]); 
+            c.add(cell.text());
+      
+         
+         
+
+       
+        }
+   	hash_html.put(table, c );
+    } 
+       
+     
+     
+      //this part is for comparing the Full data (between the array lists)
+  	int	 json_lon =hash_json.keySet().size();
+  
+  	
+	int xml_lon=hash_xml.keySet().size();
+	
+	int html_lon=hash_html.keySet().size();
+	 Iterator i = hash_json.keySet().iterator();
+	 Iterator j=hash_xml.keySet().iterator();
+	 Iterator h=hash_html.keySet().iterator();
+	 Stopwatch st = new Stopwatch().Start();
+	 HashMap<String,ArrayList<String>> fus=new HashMap<String,ArrayList<String>>();
+     while (i.hasNext()) {
+          Object e = i.next();
+          String jso=e.toString();
+    
+          while(j.hasNext()) {
+         
+        	  Object f=j.next();
+        	  
+        	  String xm=f.toString();
+        	 
+        	    
+        	  if(comparing(jso,xm)) {
+        		  
+        		  
+        		  String information=Rapproching(jso,xm);
+        		 
+        		  ArrayList<String> al= new ArrayList<String>();
+        		  al.addAll(hash_xml.get(f));
+        		  al.addAll(hash_json.get(e));
+        		  fus.put(information, al);
+        		 st.Stop();
+        		 System.out.println("here"+st.GetMilisec());
+        		 
+        		 
+        		  j.remove();
+        		 
+        		  
+        	  }else {
+        		  if(!(fus.containsKey(jso))) {
+        		  fus.put(jso,hash_json.get(e));}
+        		   if(!(fus.containsKey(xm))) {
+        		  fus.put(xm, hash_xml.get(f));
+        		   }
+        		  
+        	  }
+     
+          }  j=hash_xml.keySet().iterator();
+          }
+ 
+  
+      Iterator fu=fus.keySet().iterator();   
+      HashMap<String,ArrayList<String>> integrate=new HashMap<String,ArrayList<String>>();
+      while(fu.hasNext()) {
+    	  Object fusi=fu.next();
+    	  String sent=fusi.toString();
+    	  while(h.hasNext()) {
+    		  Object ht=h.next();
+    		  String html=ht.toString();
+    		 
+    		  if(comparing(sent,html)) {
+    			  String newinfo=Rapproching(sent,html);
+    			  ArrayList<String> al= new ArrayList<String>();
+    			  al.addAll(hash_html.get(ht));
+    			  al.addAll(fus.get(fusi));
+    			  integrate.put(newinfo, al);
+    			  h.remove();
+    			  
+    		  }else {
+    			  integrate.put(sent, fus.get(fusi));
+    			  integrate.put(html,hash_html.get(ht));
+    			  
+    		  }
+    	  }h=hash_html.keySet().iterator();
+    	  
+      }
+    
+      
+ 
+	 
+
+      DocumentBuilderFactory dFact = DocumentBuilderFactory.newInstance();
+      DocumentBuilder build = dFact.newDocumentBuilder();
+      Document dooc = build.newDocument();
+      Element root = dooc.createElement("liste_Employee");
+      dooc.appendChild(root);
+      Iterator neww=integrate.keySet().iterator(); 
+ 
+       
+       
+	 
+     while(neww.hasNext()) {
+    	  
+		  Object htt=neww.next();
+		  Element emp = dooc.createElement("Employee");
+    	  root.appendChild(emp);
+		 String attributesss=htt.toString();
+	 
+		 
+		  for(int v=0;v<integrate.get(htt).size();v++) {
+			  String node=integrate.get(htt).get(v);
+			   
+			 
+                if(attributesss!="") {
+                Element key=dooc.createElement(String.valueOf(attributesss));
+			    key.appendChild(dooc.createTextNode(String.valueOf(node)));
+			      emp.appendChild(key);
+		  }
+            
+           
+       		 
+		  }
+	 
+		 
+      
+      
+      }
+
+ 
+  
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+		  for(int v=0;v<integrate.get(attributes[a2t]).size();v++) {
+			  
+		       
+			  while(neww.hasNext()) {
+				Object   ht2=neww.next();
+				  String tess=ht2.toString();
+				  String node=integrate.get(ht2).get(v);
+                 				   
+					 
+	                if(tess!="") {
+	                Element key=dooc.createElement(String.valueOf(tess));
+				    key.appendChild(dooc.createTextNode(String.valueOf(node)));
+				      emp.appendChild(key);
+			  }	  
+			  } 
+			  
+		 
+		    
+ }}*/
+      TransformerFactory transformerFactory = TransformerFactory.newInstance();
+      Transformer transformer = transformerFactory.newTransformer();
+      DOMSource source = new DOMSource(dooc);
+      StreamResult result = new StreamResult(new File("file.xml"));
+
+     
+
+      transformer.transform(source, result);
+      
+     
+         
+      
+      
+      
+	
+   
+    }catch(NullPointerException d){d.printStackTrace();} catch (ParserConfigurationException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} catch (SAXException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+  catch(Exception e)
+{e.printStackTrace();}
+ 
+	}
+      
+      
+      
+     
+// this part for the functions that related to strings tratement 
+	
+private static  Boolean comparing(String s,String sub )
+	      
+	      double d=simuling(s,sub);
+	      
+	      
+	      if(d<6&&d==6) {return true;}
+	      else {
+	    	 if(Synonims(s,sub)) {
+	    		 return true;
+	    	 }
+	      }
+		return false;
+		 }
+private static double simuling(String s,String t) {
+	s=Filtering(s);
+	t=Filtering(t);
+	 
+	LongestCommonSubsequence lcs=new LongestCommonSubsequence ();
+	  double d= lcs.distance(s, t);
+	  double n= 100-d;
+	  return n;
+}
+ private static  String Rapproching(String s,String sub ){
+	 s=Filtering(s);
+	 sub=Filtering(sub);
+ 
+	
+	 
+		 if(Synonims(s,sub)) {
+			 return s;
+		 }
+		 
+		        int m = s.length(); 
+		        int n = sub.length(); 
+		        int[][] LCSuff = new int[m + 1][n + 1]; 
+		        
+		        
+		        int len = 0; 
+		  
+		    
+		        int row = 0, col = 0; 
+		  
+		    
+		        for (int i = 0; i <= m; i++) { 
+		            for (int j = 0; j <= n; j++) { 
+		                if (i == 0 || j == 0) 
+		                    LCSuff[i][j] = 0; 
+		  
+		                else if (s.charAt(i - 1) == sub.charAt(j - 1)) { 
+		                    LCSuff[i][j] = LCSuff[i - 1][j - 1] + 1; 
+		                    if (len < LCSuff[i][j]) { 
+		                        len = LCSuff[i][j]; 
+		                        row = i; 
+		                        col = j; 
+		                    } 
+		                } 
+		                else
+		                    LCSuff[i][j] = 0; 
+		            } 
+		        } 
+		  
+		       
+		 
+		        String resultStr = ""; 
+		  
+		     
+		        while (LCSuff[row][col] != 0) { 
+		            resultStr = s.charAt(row - 1) + resultStr;  
+		            --len; 
+		   
+		            row--; 
+		            col--; 
+		        } 
+		  
+		     
+		        return resultStr; 
+ 
+		 
+		 }
+ private static boolean  Synonims(String s,String t) {
+	 s=s.toLowerCase();
+	 t=t.toLowerCase();
+	 String[]id= {"id","number","code"};
+	 String[]type= {"Sex","Gender"};
+	 
+	 if((s.contains(id[0]))&&(t.contains(id[1])||(t.contains(id[2])))) {
+		 return true;
+	 }
+	 if((s.contains(id[1]))||(s.contains(id[2]))&&(t.contains(id[0]))) {
+		 return true;
+	 }
+	 
+	 if((((s.contains(type[0]))&&(t.contains(type[1])))) ){
+		 return true;
+	 }
+	 if(( (s.contains(type[1])&&(t.contains(type[0]))) )) {
+		 return true;
+	 }
+	 
+	 
+	 
+	
+	 
+	 
+	 
+	 return false;
+	 
+ }
+ private static String Filtering(String s ) {
+	 s=s.toLowerCase();
+	 
+		String del="employ";
+		 if(s.contains(del)) {
+	   s=  s.replace(del,"");
+ 
+	     }
+		 return s;
+		 
+		 	 
+ }
+ 
+ 
+ 
+  }
+
+ 
